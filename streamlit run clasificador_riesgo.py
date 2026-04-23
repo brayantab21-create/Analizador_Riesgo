@@ -19,7 +19,7 @@ matriculas = st.number_input("Número de matrículas", 1, 30)
 
 traslado = st.selectbox("¿Es traslado?", ["No", "Sí"])
 
-movilidad = st.selectbox("¿Está en movilidad?", ["No", "Sí"])
+trabajo = st.selectbox("¿Está trabajando?", ["No", "Sí"])
 
 diversidad = st.selectbox("¿Tiene diversidad funcional?", ["No", "Sí"])
 
@@ -96,26 +96,33 @@ if traslado == "Sí":
     st.warning("Traslado: Riesgo Medio")
     riesgos.append(2)
 
-# Movilidad
-if movilidad == "Sí":
-    st.error("Movilidad: Riesgo Alto")
-    riesgos.append(3)
-
-# Diversidad
+# Diversidad funcional
 if diversidad == "Sí":
     st.error("Diversidad funcional: Riesgo Alto")
     riesgos.append(3)
 
-# Créditos matriculados
-if cred_matriculados > 15:
-    st.error("Carga alta de créditos")
-    riesgos.append(3)
-elif cred_matriculados >= 10:
-    st.warning("Carga media de créditos")
-    riesgos.append(2)
+# Créditos matriculados ajustado por trabajo
+if trabajo == "Sí":
+    if cred_matriculados > 12:
+        st.error("Carga alta de créditos para estudiante que trabaja")
+        riesgos.append(3)
+    elif cred_matriculados >= 8:
+        st.warning("Carga media de créditos para estudiante que trabaja")
+        riesgos.append(2)
+    else:
+        st.success("Carga manejable para estudiante que trabaja")
+        riesgos.append(1)
+
 else:
-    st.success("Carga baja de créditos")
-    riesgos.append(1)
+    if cred_matriculados > 15:
+        st.error("Carga alta de créditos")
+        riesgos.append(3)
+    elif cred_matriculados >= 10:
+        st.warning("Carga media de créditos")
+        riesgos.append(2)
+    else:
+        st.success("Carga baja de créditos")
+        riesgos.append(1)
 
 # -----------------------------
 # RIESGO GLOBAL
