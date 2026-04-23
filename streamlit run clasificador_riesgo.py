@@ -33,12 +33,17 @@ diversidad = st.selectbox("¿Tiene diversidad funcional?", ["No", "Sí"])
 
 cred_matriculados = st.number_input("Créditos matriculados", min_value=0, max_value=30)
 
+trabaja = st.selectbox("¿Actualmente trabaja?", ["No", "Sí"])
+
 # -----------------------------------
 # CÁLCULOS
 # -----------------------------------
 ratio = avance / matriculas if matriculas > 0 else 0
 
 st.metric("Avance / Matrícula", round(ratio, 2))
+
+horas_academicas = cred_matriculados * 3
+st.metric("Horas académicas estimadas/semana", horas_academicas)
 
 # -----------------------------------
 # ALERTAS
@@ -134,18 +139,31 @@ if diversidad == "Sí":
 else:
     riesgos.append(1)
 
-# Créditos matriculados
-if cred_matriculados > 15:
-    st.error("Carga alta de créditos")
-    riesgos.append(3)
-    recomendaciones.append("Revisar carga académica para evitar sobrecarga.")
-elif cred_matriculados >= 10:
-    st.warning("Carga media de créditos")
-    riesgos.append(2)
-    recomendaciones.append("Mantener equilibrio entre carga y rendimiento.")
+# Créditos matriculados ajustado por trabajo
+if trabaja == "Sí":
+    if cred_matriculados > 12:
+        st.error("Carga alta de créditos para estudiante que trabaja")
+        riesgos.append(3)
+        recomendaciones.append("Reducir carga académica o reorganizar tiempos por compatibilidad con jornada laboral.")
+    elif cred_matriculados >= 8:
+        st.warning("Carga media de créditos para estudiante que trabaja")
+        riesgos.append(2)
+        recomendaciones.append("Monitorear equilibrio entre trabajo y estudio.")
+    else:
+        st.success("Carga manejable para estudiante que trabaja")
+        riesgos.append(1)
 else:
-    st.success("Carga baja de créditos")
-    riesgos.append(1)
+    if cred_matriculados > 15:
+        st.error("Carga alta de créditos")
+        riesgos.append(3)
+        recomendaciones.append("Revisar carga académica para evitar sobrecarga.")
+    elif cred_matriculados >= 10:
+        st.warning("Carga media de créditos")
+        riesgos.append(2)
+        recomendaciones.append("Mantener equilibrio entre carga y rendimiento.")
+    else:
+        st.success("Carga baja de créditos")
+        riesgos.append(1)
 
 # -----------------------------------
 # RESULTADO GLOBAL
