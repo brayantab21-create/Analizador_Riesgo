@@ -1,191 +1,132 @@
 import streamlit as st
 
-# -----------------------------------
-# CONFIGURACIÓN GENERAL
-# -----------------------------------
-st.set_page_config(page_title="Clasificador de Riesgo Académico", layout="centered")
+st.set_page_config(page_title="Clasificador de Riesgo", layout="centered")
 
-# -----------------------------------
-# TÍTULO
-# -----------------------------------
-st.markdown("""
-<h1 style='text-align: center;'>Clasificador de Riesgo Académico</h1>
-<p style='text-align: center; font-size:18px;'>
-Modelo de clasificación basado en criterios institucionales
-</p>
-""", unsafe_allow_html=True)
+st.title("Clasificador de Riesgo Académico")
 
-# -----------------------------------
-# VARIABLES DE ENTRADA
-# -----------------------------------
-st.subheader("Caracterización del Estudiante")
+# -----------------------------
+# ENTRADAS
+# -----------------------------
+papa = st.number_input("P.A.P.A.", 0.0, 5.0, step=0.1)
 
-semestre = st.number_input("Semestre actual", min_value=1, max_value=20)
+bolsa = st.number_input("Bolsa de créditos", 0, 100)
 
-reingreso = st.selectbox("¿Es estudiante de reingreso?", ["No", "Sí"])
+puntaje = st.number_input("Puntaje de admisión", 0, 1000)
 
-papa = st.number_input("P.A.P.A.", min_value=0.0, max_value=5.0, step=0.1)
+avance = st.number_input("Porcentaje de avance", 0.0, 100.0)
 
-avance = st.number_input("Porcentaje de avance (%)", min_value=0, max_value=100)
+matriculas = st.number_input("Número de matrículas", 1, 30)
 
-matriculas = st.number_input("Número de matrículas acumuladas", min_value=1, max_value=50)
+traslado = st.selectbox("¿Es traslado?", ["No", "Sí"])
 
-traslado = st.selectbox("¿Es traslado de programa?", ["No", "Sí"])
+movilidad = st.selectbox("¿Está en movilidad?", ["No", "Sí"])
 
-# -----------------------------------
-# PUNTAJE DE ADMISIÓN
-# -----------------------------------
-st.subheader("Puntaje de Admisión")
+diversidad = st.selectbox("¿Tiene diversidad funcional?", ["No", "Sí"])
 
-puntaje = st.number_input("Puntaje de admisión", min_value=0, max_value=1000)
+cred_matriculados = st.number_input("Créditos matriculados", 0, 30)
 
-# -----------------------------------
-# CARGA ACADÉMICA Y CONTEXTO
-# -----------------------------------
-st.subheader("Carga Académica y Contexto")
+# -----------------------------
+# CALCULO AVANCE / MATRICULA
+# -----------------------------
+ratio = avance / matriculas
 
-creditos_semestre = st.number_input("Número de créditos matriculados este semestre", min_value=1, max_value=30)
+st.metric("Avance / Matrícula", round(ratio, 2))
 
-trabaja = st.selectbox("¿Actualmente trabaja?", ["No", "Sí"])
+# -----------------------------
+# ALERTAS
+# -----------------------------
+st.subheader("Alertas por criterio")
 
-cuida = st.selectbox("¿Tiene responsabilidades de cuidado?", ["No", "Sí"])
+riesgos = []
 
-horas_academicas = creditos_semestre * 3
+# PAPA
+if 3.0 <= papa <= 3.3:
+    st.error("P.A.P.A.: Riesgo Alto")
+    riesgos.append(3)
+elif 3.3 < papa <= 4:
+    st.warning("P.A.P.A.: Riesgo Medio")
+    riesgos.append(2)
+elif papa > 4:
+    st.success("P.A.P.A.: Riesgo Bajo")
+    riesgos.append(1)
 
-st.metric("Horas académicas estimadas por semana", horas_academicas)
-
-# -----------------------------------
-# CLASIFICACIÓN POR PERFIL
-# -----------------------------------
-riesgo_perfil = "Bajo"
-
-if semestre <= 2:
-    riesgo_perfil = "Alto"
-
-elif reingreso == "Sí":
-    riesgo_perfil = "Alto"
-
-elif 3.0 <= papa <= 3.3:
-    riesgo_perfil = "Alto"
-
-elif avance >= 90:
-    riesgo_perfil = "Medio"
-
-elif matriculas > 13 and avance < 50:
-    riesgo_perfil = "Medio"
-
-elif traslado == "Sí":
-    riesgo_perfil = "Medio"
-
-elif papa > 4.0:
-    riesgo_perfil = "Bajo"
-
-# -----------------------------------
-# CLASIFICACIÓN POR PUNTAJE
-# -----------------------------------
-if puntaje >= 650:
-    riesgo_puntaje = "Muy bajo"
-elif puntaje >= 550:
-    riesgo_puntaje = "Bajo"
-elif puntaje >= 450:
-    riesgo_puntaje = "Medio"
-elif puntaje >= 350:
-    riesgo_puntaje = "Alto"
+# Bolsa
+if bolsa <= 10:
+    st.error("Bolsa de créditos: Riesgo Alto")
+    riesgos.append(3)
+elif bolsa <= 20:
+    st.warning("Bolsa de créditos: Riesgo Medio")
+    riesgos.append(2)
 else:
-    riesgo_puntaje = "Crítico"
+    st.success("Bolsa de créditos: Riesgo Bajo")
+    riesgos.append(1)
 
-# -----------------------------------
-# CONSOLIDACIÓN DEL RIESGO
-# -----------------------------------
-niveles = {
-    "Muy bajo": 1,
-    "Bajo": 2,
-    "Medio": 3,
-    "Alto": 4,
-    "Crítico": 5
-}
+# Reingreso
+if papa < 2.7:
+    st.error("Reingreso por Consejo Superior")
+    riesgos.append(3)
+elif papa < 3:
+    st.warning("Reingreso por Consejo de Facultad")
+    riesgos.append(2)
 
-map_perfil = {
-    "Bajo": 2,
-    "Medio": 3,
-    "Alto": 4
-}
-
-valor_final = max(map_perfil[riesgo_perfil], niveles[riesgo_puntaje])
-
-riesgo_final = [k for k, v in niveles.items() if v == valor_final][0]
-
-# -----------------------------------
-# AJUSTE POR SOBRECARGA
-# -----------------------------------
-if trabaja == "Sí" and horas_academicas >= 50:
-    riesgo_final = "Alto"
-
-if cuida == "Sí" and horas_academicas >= 50:
-    riesgo_final = "Alto"
-
-# -----------------------------------
-# RESULTADOS
-# -----------------------------------
-st.subheader("Resultado de Clasificación")
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.metric("Riesgo por Perfil", riesgo_perfil)
-
-with col2:
-    st.metric("Riesgo por Puntaje", riesgo_puntaje)
-
-with col3:
-    st.metric("Riesgo Consolidado", riesgo_final)
-
-# -----------------------------------
-# ALERTAS POR CARGA
-# -----------------------------------
-st.subheader("Alertas de Sobrecarga")
-
-if trabaja == "Sí" and horas_academicas >= 50:
-    st.warning("La carga académica y laboral podría afectar descanso y rendimiento.")
-
-if cuida == "Sí" and horas_academicas >= 50:
-    st.warning("La carga académica y de cuidado podría generar sobrecarga.")
-
-if horas_academicas >= 60:
-    st.error("La carga académica semanal estimada es muy alta.")
-
-# -----------------------------------
-# INTERPRETACIÓN
-# -----------------------------------
-st.subheader("Interpretación")
-
-if riesgo_final in ["Crítico", "Alto"]:
-    st.error("Se recomienda intervención prioritaria y acompañamiento intensivo.")
-
-elif riesgo_final == "Medio":
-    st.warning("Seguimiento periódico sugerido para evitar deterioro académico.")
-
+# Puntaje
+if puntaje < 450:
+    st.error("Puntaje admisión: Riesgo Alto")
+    riesgos.append(3)
+elif puntaje <= 550:
+    st.warning("Puntaje admisión: Riesgo Medio")
+    riesgos.append(2)
 else:
-    st.success("Condiciones académicas estables.")
+    st.success("Puntaje admisión: Riesgo Bajo")
+    riesgos.append(1)
 
-# -----------------------------------
-# EXPLICACIÓN
-# -----------------------------------
-st.markdown("""
-<hr>
-<div style='text-align:center;'>
+# Avance/Matrícula
+if ratio < 4.16:
+    st.error("Avance/Matrícula: Riesgo Alto")
+    riesgos.append(3)
+elif ratio < 6.25:
+    st.warning("Avance/Matrícula: Riesgo Medio")
+    riesgos.append(2)
+else:
+    st.success("Avance/Matrícula: Riesgo Bajo")
+    riesgos.append(1)
 
-<b>Clasificación por Perfil:</b><br>
-Evalúa características académicas y administrativas.<br><br>
+# Traslado
+if traslado == "Sí":
+    st.warning("Traslado: Riesgo Medio")
+    riesgos.append(2)
 
-<b>Clasificación por Puntaje:</b><br>
-Evalúa el riesgo con base en antecedentes de ingreso.<br><br>
+# Movilidad
+if movilidad == "Sí":
+    st.error("Movilidad: Riesgo Alto")
+    riesgos.append(3)
 
-<b>Carga Académica:</b><br>
-Cada crédito equivale a 3 horas de trabajo semanal.<br><br>
+# Diversidad
+if diversidad == "Sí":
+    st.error("Diversidad funcional: Riesgo Alto")
+    riesgos.append(3)
 
-<b>Riesgo Consolidado:</b><br>
-Se toma el criterio más restrictivo para priorizar acompañamiento.
+# Créditos matriculados
+if cred_matriculados > 15:
+    st.error("Carga alta de créditos")
+    riesgos.append(3)
+elif cred_matriculados >= 10:
+    st.warning("Carga media de créditos")
+    riesgos.append(2)
+else:
+    st.success("Carga baja de créditos")
+    riesgos.append(1)
 
-</div>
-""", unsafe_allow_html=True)
+# -----------------------------
+# RIESGO GLOBAL
+# -----------------------------
+promedio_riesgo = sum(riesgos) / len(riesgos)
+
+st.subheader("Resultado Global")
+
+if promedio_riesgo >= 2.5:
+    st.error("Riesgo Global Alto")
+elif promedio_riesgo >= 1.7:
+    st.warning("Riesgo Global Medio")
+else:
+    st.success("Riesgo Global Bajo")
