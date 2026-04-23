@@ -208,6 +208,6 @@ else:
 st.markdown("""
 <hr>
 <div style='text-align:center;'>
-Sistema de clasificación académica basado en criterios institucionales.
+Sistema de clasificación académica.
 </div>
 """, unsafe_allow_html=True)
