@@ -21,19 +21,30 @@ else:
     puntaje_papa = 1
 
 # -----------------------------
-# 2. Porcentaje de avance
+# 2. Avance académico
 # -----------------------------
-st.subheader("2. Porcentaje de avance")
-avance = st.slider("Seleccione el porcentaje de avance", 0, 100, 50)
+st.subheader("2. Avance académico")
 
-if avance < 25:
+avance = st.slider("Seleccione el porcentaje de avance", 0, 100, 50)
+matricula_actual = st.number_input("Número de matrícula actual", min_value=1, step=1)
+
+if matricula_actual > 13 and avance < 50:
     puntaje_avance = 4
+    alerta_avance = "🔴 Riesgo crítico: alta permanencia con bajo avance."
+elif avance < 25:
+    puntaje_avance = 4
+    alerta_avance = "🔴 Riesgo crítico."
 elif avance < 50:
     puntaje_avance = 3
+    alerta_avance = "🟠 Riesgo alto."
 elif avance < 80:
     puntaje_avance = 2
+    alerta_avance = "🟡 Riesgo medio."
 else:
     puntaje_avance = 1
+    alerta_avance = "🟢 Riesgo bajo."
+
+st.info(alerta_avance)
 
 # -----------------------------
 # 3. Materias perdidas / repitencia
