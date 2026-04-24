@@ -13,18 +13,12 @@ papa = st.number_input("Ingrese el PAPA", min_value=0.0, max_value=5.0, step=0.1
 
 if papa < 3.0:
     puntaje_papa = 4
-    riesgo_papa = "Crítico"
 elif papa <= 3.3:
     puntaje_papa = 3
-    riesgo_papa = "Alto"
 elif papa <= 4.0:
     puntaje_papa = 2
-    riesgo_papa = "Medio"
 else:
     puntaje_papa = 1
-    riesgo_papa = "Bajo"
-
-st.write(f"Riesgo por PAPA: {riesgo_papa}")
 
 # -----------------------------
 # 2. Porcentaje de avance
@@ -34,18 +28,12 @@ avance = st.slider("Seleccione el porcentaje de avance", 0, 100, 50)
 
 if avance < 25:
     puntaje_avance = 4
-    riesgo_avance = "Crítico"
 elif avance < 50:
     puntaje_avance = 3
-    riesgo_avance = "Alto"
 elif avance < 80:
     puntaje_avance = 2
-    riesgo_avance = "Medio"
 else:
     puntaje_avance = 1
-    riesgo_avance = "Bajo"
-
-st.write(f"Riesgo por avance: {riesgo_avance}")
 
 # -----------------------------
 # 3. Materias perdidas / repitencia
@@ -55,53 +43,53 @@ materias_perdidas = st.number_input("Número de materias perdidas", min_value=0,
 
 if materias_perdidas == 0:
     puntaje_materias = 1
-    riesgo_materias = "Bajo"
 elif materias_perdidas <= 2:
     puntaje_materias = 2
-    riesgo_materias = "Medio"
 elif materias_perdidas <= 4:
     puntaje_materias = 3
-    riesgo_materias = "Alto"
 else:
     puntaje_materias = 4
-    riesgo_materias = "Crítico"
-
-st.write(f"Riesgo por repitencia: {riesgo_materias}")
 
 # -----------------------------
 # 4. Condición del estudiante
 # -----------------------------
 st.subheader("4. Condición del estudiante")
 
-reingreso = st.radio("¿Es estudiante de reingreso?", ["No", "Sí"])
-traslado = st.radio("¿Se trasladó de programa?", ["No", "Sí"])
-trabaja = st.radio("¿Actualmente trabaja?", ["No", "Sí"])
+preguntas = [
+    "¿Es estudiante de reingreso?",
+    "¿Se trasladó de programa?",
+    "¿Actualmente trabaja?"
+]
+
+respuestas = {}
+
+for pregunta in preguntas:
+    col1, col2 = st.columns([4, 2])
+
+    with col1:
+        st.write(pregunta)
+
+    with col2:
+        respuestas[pregunta] = st.radio(
+            "",
+            ["No", "Sí"],
+            horizontal=True,
+            key=pregunta
+        )
 
 puntaje_condicion = 0
 
-if reingreso == "Sí":
+if respuestas["¿Es estudiante de reingreso?"] == "Sí":
     puntaje_condicion += 2
 
-if traslado == "Sí":
+if respuestas["¿Se trasladó de programa?"] == "Sí":
     puntaje_condicion += 1
 
-if trabaja == "Sí":
+if respuestas["¿Actualmente trabaja?"] == "Sí":
     puntaje_condicion += 3
 
-if puntaje_condicion == 0:
-    riesgo_condicion = "Bajo"
-elif puntaje_condicion <= 2:
-    riesgo_condicion = "Medio"
-elif puntaje_condicion <= 4:
-    riesgo_condicion = "Alto"
-else:
-    riesgo_condicion = "Crítico"
-
-st.write(f"Puntaje condición: {puntaje_condicion}")
-st.write(f"Riesgo por condición: {riesgo_condicion}")
-
 # -----------------------------
-# 5. Alertas psicosociales / económicas / disciplinarias
+# 5. Alertas adicionales
 # -----------------------------
 st.subheader("5. Alertas adicionales")
 
@@ -121,16 +109,11 @@ if convivencia:
 if familiar:
     puntaje_alertas += 1
 
-if puntaje_alertas == 0:
-    riesgo_alertas = "Bajo"
-elif puntaje_alertas == 1:
-    riesgo_alertas = "Medio"
-elif puntaje_alertas == 2:
-    riesgo_alertas = "Alto"
-else:
-    riesgo_alertas = "Crítico"
-
-st.write(f"Riesgo por alertas: {riesgo_alertas}")
+# -----------------------------
+# NORMALIZACIÓN
+# -----------------------------
+condicion_norm = (puntaje_condicion / 6) * 4
+alertas_norm = (puntaje_alertas / 4) * 4
 
 # -----------------------------
 # Cálculo final ponderado
@@ -141,8 +124,8 @@ riesgo_total = (
     puntaje_papa * 0.35 +
     puntaje_avance * 0.20 +
     puntaje_materias * 0.20 +
-    puntaje_condicion * 0.10 +
-    puntaje_alertas * 0.15
+    condicion_norm * 0.10 +
+    alertas_norm * 0.15
 )
 
 if riesgo_total <= 1.9:
@@ -156,3 +139,25 @@ else:
 
 st.metric("Puntaje Total", round(riesgo_total, 2))
 st.success(f"Clasificación del riesgo: {clasificacion}")
+
+# -----------------------------
+# SUGERENCIAS GLOBALES
+# -----------------------------
+st.subheader("Sugerencias Globales")
+
+if clasificacion == "🔴 Crítico":
+    st.error(
+        "Se recomienda intervención inmediata, revisión de carga académica y acompañamiento psicosocial."
+    )
+elif clasificacion == "🟠 Alto":
+    st.warning(
+        "Se recomienda seguimiento académico prioritario, tutorías y orientación personalizada."
+    )
+elif clasificacion == "🟡 Medio":
+    st.info(
+        "Se recomienda monitoreo preventivo y fortalecimiento de hábitos de estudio."
+    )
+else:
+    st.success(
+        "Condición académica estable. Mantener estrategias actuales."
+    )
