@@ -202,10 +202,23 @@ if df is None:
     """, unsafe_allow_html=True)
     st.stop()
 
-# ─── Filtros laterales ────────────────────────────────────────────────────────
+# ─── Filtros laterales (en cascada) ──────────────────────────────────────────
 with st.sidebar:
-    programas = sorted(df["PROGRAMA_CURRICULAR"].dropna().unique())
+    # 1. Facultad
+    facultades = sorted(df["FACULTAD"].dropna().unique())
+    sel_fac = st.multiselect("Facultad", facultades, default=facultades)
+
+    # 2. Departamento — solo los que pertenecen a las facultades seleccionadas
+    df_fac = df[df["FACULTAD"].isin(sel_fac)]
+    departamentos = sorted(df_fac["DEPARTAMENTO"].dropna().unique())
+    sel_dep = st.multiselect("Departamento", departamentos, default=departamentos)
+
+    # 3. Programa — solo los que pertenecen a los departamentos seleccionados
+    df_dep = df_fac[df_fac["DEPARTAMENTO"].isin(sel_dep)]
+    programas = sorted(df_dep["PROGRAMA_CURRICULAR"].dropna().unique())
     sel_prog = st.multiselect("Programa curricular", programas, default=programas)
+
+    st.divider()
 
     niveles = ["Bajo", "Medio", "Alto", "Crítico"]
     sel_nivel = st.multiselect("Nivel de riesgo", niveles, default=niveles)
@@ -223,6 +236,8 @@ with st.sidebar:
 
 # ─── Aplicar filtros ──────────────────────────────────────────────────────────
 dff = df[
+    df["FACULTAD"].isin(sel_fac) &
+    df["DEPARTAMENTO"].isin(sel_dep) &
     df["PROGRAMA_CURRICULAR"].isin(sel_prog) &
     df["NIVEL_RIESGO"].isin(sel_nivel) &
     df["PROFESIONAL REPORTE"].isin(sel_prof)
